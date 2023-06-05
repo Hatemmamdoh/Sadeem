@@ -1,111 +1,130 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:sadeem/screens/productDetailsScreen.dart';
+import 'package:sadeem/state_managment/product_bloc.dart';
 
+import 'cartScreen.dart';
 
 // price
 // title
 // description
 // image
-class Product {
-  final String title;
-  final String description;
-  final double price;
-  final String imageUrl;
 
-  Product(this.title, this.description, this.price,this.imageUrl);
-}
+class ProductsScreen extends StatelessWidget {
 
-class ProductsScreen extends StatefulWidget {
-  @override
-  _ProductsScreenState createState() => _ProductsScreenState();
-}
+  const ProductsScreen._({Key? key,}) : super(key: key);
 
-class _ProductsScreenState extends State<ProductsScreen> {
-
-  List<Product> products = [
-    Product(
-      'Product 1',
-      'Description for Product 1',
-      9.99,
-      'images/2.png'
-    ),
-    Product(
-      'Product 2',
-      'Description for Product 2',
-      19.99,
-        'images/3.png'
-    ),
-    Product(
-      'Product 3',
-      'Description for Product 3',
-      14.99,
-        'images/2.png'
-    ),
-  ];
-
+  static Widget create(context,) {
+    return BlocProvider<ProductBloc>(
+      create: (context) =>
+      ProductBloc()
+        ..add(FetchProductEvent()),
+      child: ProductsScreen._(),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Products'),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.shopping_cart),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => CartScreen.create(context),
+                  ),
+                );
+              },
+            ),
+          ]
       ),
-      body: ListView.builder(
-        itemCount: products.length,
-        itemBuilder: (context, index) {
-          return Card(
-            child: Padding(
-              padding: const EdgeInsets.all(6.0),
-              child: Center(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row (
-                      children: [
-                        Image.asset(
-                          products[index].imageUrl,
-                          width: 100,
-                          height: 100,
-                        ),
-                        SizedBox(width: 10),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+      body: BlocBuilder<ProductBloc, ProductState>(
+        builder: (context, state) {
+          print(state.isLoading);
+
+          if (state.isLoading){
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+          else {
+            if (state.products.length == 0){
+              return (Text ("There is no products")) ;
+            }
+           return ListView.builder(
+              itemCount: state.products.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProductDetailScreen.create(context, state.products[index].title),
+                      ),
+                    );
+                  },
+                  child: Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(6.0),
+                      child: Center(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            SizedBox(height: 5),
-                            Text(
-                              products[index].title,
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            Row(
+                              children: [
+                                Image.asset(
+                                  state.products[index].imageUrl,
+                                  width: 100,
+                                  height: 100,
+                                ),
+                                SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    SizedBox(height: 5),
+                                    Text(
+                                      state.products[index].title,
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    SizedBox(height: 5),
+                                    Text(state.products[index].description),
+                                    SizedBox(height: 5),
+                                  ],
+                                ),
+                              ],
                             ),
-                            SizedBox(height: 5),
-                            Text(products[index].description),
-                            SizedBox(height: 5),
+                            Column(
+                              children: [
+                                SizedBox(height: 5),
+                                Text(
+                                  '\$${state.products[index].price.toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ],
                         ),
-                      ],
+                      ),
                     ),
-                    Column(
-                      children: [
-                        SizedBox(height: 5),
-                        Text(
-                          '\$${products[index].price.toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
+                  ),
+                );
+              },
+            );
+          }
+
         },
       ),
     );
   }
+
 }

@@ -190,15 +190,6 @@ class LoginScreen extends StatelessWidget {
   }
 }
 
-// class _LoginScreenState extends State<LoginScreen> {
-//   final _nameController = TextEditingController();
-//   final _passwordController = TextEditingController();
-//   String _textFieldValue = '';
-//   String _passwordFieldValue = '';
-//   bool _isPasswordVisible = false;
-//
-//   bool _isLoading = false;
-//
 
 
 

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:sadeem/screens/productDetailsScreen.dart';
 import 'package:sadeem/state_managment/product_bloc.dart';
+import 'package:provider/provider.dart';
 
+
+import '../provider/theme_provider.dart';
 import 'cartScreen.dart';
 
 // price
@@ -25,10 +28,17 @@ class ProductsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
     return Scaffold(
       appBar: AppBar(
         title: Text('Products'),
           actions: [
+            Switch(
+              value: themeProvider.isLightTheme,
+              onChanged: (val) {
+                themeProvider.setThemeData (val) ;
+              },
+            ),
             IconButton(
               icon: Icon(Icons.shopping_cart),
               onPressed: () {

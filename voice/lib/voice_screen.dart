@@ -4,7 +4,6 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class AudioRecorderScreen extends StatefulWidget {
   @override
@@ -19,6 +18,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
   bool isPaused = false;
   String currentFilePath = '';
   List<String> recordedFiles = [];
+  String currentPlayingFile = ''; // Track the currently playing file
 
   @override
   void initState() {
@@ -33,20 +33,12 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
     super.dispose();
   }
 
-  Future initRecorder() async {
-    final status = await Permission.microphone.request();
-    if (status != PermissionStatus.granted) {
-      throw 'Microphone permission not granted';
-    }
-    await recorder.openRecorder();
-  }
-
   Future<void> startRecording() async {
-    initRecorder() ;
     try {
       final directory = await getApplicationDocumentsDirectory();
       final filePath = '${directory.path}/recording_${DateTime.now().microsecondsSinceEpoch}.aac';
 
+      await recorder.openRecorder();
       await recorder.startRecorder(toFile: filePath);
       setState(() {
         isRecording = true;
@@ -77,10 +69,13 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
       await player.play(DeviceFileSource(filePath));
       setState(() {
         isPlaying = true;
+        currentPlayingFile = filePath;
+
       });
       player.onPlayerComplete.listen((event) {
         setState(() {
           isPlaying = false;
+          currentPlayingFile = '';
         });
       });
     } catch (e) {
@@ -121,7 +116,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
 
   Widget buildRecordItem(String filePath) {
     return GestureDetector(
-      onTap: () =>  playAudio(filePath) ,
+      onTap: () =>  isPlaying ? pauseAudio() : playAudio(filePath) ,
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
@@ -135,7 +130,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
                 color: Colors.green,
               ),
               child: Icon(
-                isPaused && currentFilePath == filePath ? Icons.pause : Icons.play_arrow,
+                currentPlayingFile == filePath && isPlaying ? Icons.pause : Icons.play_arrow ,
                 size: 36,
                 color: Colors.white,
               ),
@@ -150,10 +145,10 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4),
-                  Text(
-                    getFormattedDuration(Duration(seconds: 20)),
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  // Text(
+                  //   getFormattedDuration(Duration(seconds: 20)),
+                  //   style: TextStyle(color: Colors.grey),
+                  // ),
                 ],
               ),
             ),

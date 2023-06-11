@@ -145,22 +145,22 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
     return audio.getDuration() ;
   }
 
-  Widget buildRecordItem(String filePath) {
+  Widget buildRecordItem(String filePath)  {
     return GestureDetector(
-      onTap: () =>  {
+      onTap: () async {
         if (filePath != currentPlayingFile){
-          stopAudio(),
-          playAudio(filePath)
+          await stopAudio();
+          playAudio(filePath);
         }
         else {
           if (!isPlaying && isPaused){
-            resumeAudio()
+            resumeAudio() ;
           }
           else if (isPlaying && isResumed ){
-            pauseAudio()
+            pauseAudio() ;
           }
           else {
-              playAudio(filePath)
+              playAudio(filePath) ;
             }
         }
 

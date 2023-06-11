@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_sound/flutter_sound.dart';
+import 'package:media_info/media_info.dart';
 import 'package:path_provider/path_provider.dart';
 
 class AudioRecorderScreen extends StatefulWidget {
@@ -16,6 +17,7 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
   bool isRecording = false;
   bool isPlaying = false;
   bool isPaused = false;
+  bool isResumed = false ;
   String currentFilePath = '';
   List<String> recordedFiles = [];
   String currentPlayingFile = ''; // Track the currently playing file
@@ -69,12 +71,15 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
       await player.play(DeviceFileSource(filePath));
       setState(() {
         isPlaying = true;
+        isResumed = true ;
         currentPlayingFile = filePath;
 
       });
       player.onPlayerComplete.listen((event) {
         setState(() {
           isPlaying = false;
+          isPaused = false ;
+          isResumed = false ;
           currentPlayingFile = '';
         });
       });
@@ -88,9 +93,29 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
       setState(() {
         isPlaying = false;
         isPaused = true;
+        isResumed = false ;
       });
     }
   }
+
+  Future<void> resumeAudio() async {
+      await player.resume();
+      setState(() {
+        isPlaying = true ;
+        isPaused = false;
+        isResumed = true;
+      });
+  }
+
+  Future<void> stopAudio() async {
+    await player.stop();
+    setState(() {
+      isPlaying = false ;
+      isPaused = false;
+      isResumed = false;
+    });
+  }
+
 
   Future<void> fetchRecordedFiles() async {
     try {
@@ -113,10 +138,33 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
     final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
   }
+  Future<Duration?> getDuaration (String path)  {
+    final audio = AudioPlayer();
+    audio.setSourceDeviceFile(path) ;
+    print (audio.getDuration()) ;
+    return audio.getDuration() ;
+  }
 
   Widget buildRecordItem(String filePath) {
     return GestureDetector(
-      onTap: () =>  isPlaying ? pauseAudio() : playAudio(filePath) ,
+      onTap: () =>  {
+        if (filePath != currentPlayingFile){
+          stopAudio(),
+          playAudio(filePath)
+        }
+        else {
+          if (!isPlaying && isPaused){
+            resumeAudio()
+          }
+          else if (isPlaying && isResumed ){
+            pauseAudio()
+          }
+          else {
+              playAudio(filePath)
+            }
+        }
+
+      } ,
       child: Container(
         padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
         child: Row(
@@ -145,10 +193,25 @@ class _AudioRecorderScreenState extends State<AudioRecorderScreen> {
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   SizedBox(height: 4),
-                  // Text(
-                  //   getFormattedDuration(Duration(seconds: 20)),
-                  //   style: TextStyle(color: Colors.grey),
-                  // ),
+                  // FutureBuilder<String>(
+                  //   future: getDuaration(filePath).then(getFormattedDuration()),
+                  //   builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+                  //     if (snapshot.connectionState == ConnectionState.waiting) {
+                  //       // While the future is loading, show a loading indicator or placeholder
+                  //       return CircularProgressIndicator();
+                  //     } else if (snapshot.hasError) {
+                  //       // If there's an error, display an error message
+                  //       print (snapshot.error) ;
+                  //       print ('---------------here') ;
+                  //       return Text('');
+                  //     } else {
+                  //       return Text(
+                  //         snapshot.data?.toString() ?? '', // Use the duration value or an empty string
+                  //         style: TextStyle(color: Colors.grey),
+                  //       );
+                  //     }
+                  //   },
+                  // )
                 ],
               ),
             ),
